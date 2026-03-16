@@ -225,7 +225,7 @@ export function saveConfig(config: StoredConfig): void {
     ...config,
     workspaces: config.workspaces.map(ws => ({
       ...ws,
-      rootPath: toPortablePath(ws.rootPath),
+      rootPath: ws.rootPath,
     })),
   };
 

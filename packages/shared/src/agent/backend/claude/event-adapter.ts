@@ -167,6 +167,12 @@ export class ClaudeEventAdapter extends BaseEventAdapter {
         this.adaptAuthStatus(message, events);
         break;
 
+      case 'rate_limit_event':
+          if (this.callbacks.onDebug) {
+            this.callbacks.onDebug(`Rate limit info: ${JSON.stringify(message as any)}`);
+          }
+          break;
+
       default:
         if (this.callbacks.onDebug) {
           this.callbacks.onDebug(`Unhandled SDK message type: ${(message as any).type}`);

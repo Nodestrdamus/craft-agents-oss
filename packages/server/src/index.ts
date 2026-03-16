@@ -1,4 +1,24 @@
 #!/usr/bin/env bun
+
+// Safety net: catch unhandled SDK errors (e.g. "Operation aborted" during auth flow teardown)
+process.on("uncaughtException", (err) => {
+  const msg = err?.message || String(err)
+  if (msg.includes("Operation aborted") || msg.includes("aborted")) {
+    console.error(`[safety-net] Caught SDK abort error (non-fatal): ${msg}`)
+    return
+  }
+  console.error("[safety-net] Fatal uncaught exception:", err)
+  process.exit(1)
+})
+process.on("unhandledRejection", (reason) => {
+  const msg = reason instanceof Error ? reason.message : String(reason)
+  if (msg.includes("Operation aborted") || msg.includes("aborted")) {
+    console.error(`[safety-net] Caught SDK abort rejection (non-fatal): ${msg}`)
+    return
+  }
+  console.error("[safety-net] Unhandled rejection:", reason)
+})
+
 /**
  * @craft-agent/server — standalone headless Craft Agent server.
  *
