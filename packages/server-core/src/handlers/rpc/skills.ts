@@ -8,9 +8,15 @@ import type { HandlerDeps } from '../handler-deps'
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.skills.GET,
   RPC_CHANNELS.skills.GET_FILES,
+  RPC_CHANNELS.skills.CREATE,
+  RPC_CHANNELS.skills.SAVE,
   RPC_CHANNELS.skills.DELETE,
   RPC_CHANNELS.skills.OPEN_EDITOR,
   RPC_CHANNELS.skills.OPEN_FINDER,
+  RPC_CHANNELS.skills.GET_GLOBAL,
+  RPC_CHANNELS.skills.CREATE_GLOBAL,
+  RPC_CHANNELS.skills.SAVE_GLOBAL,
+  RPC_CHANNELS.skills.DELETE_GLOBAL,
 ] as const
 
 export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): void {
@@ -77,6 +83,28 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     return scanDirectory(skillDir)
   })
 
+  // Create a new skill in a workspace
+  server.handle(RPC_CHANNELS.skills.CREATE, async (_ctx, workspaceId: string, skillSlug: string, input: { name: string; description: string; content: string; globs?: string[]; alwaysAllow?: string[]; icon?: string; requiredSources?: string[] }) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error('Workspace not found')
+
+    const { createSkill } = await import('@craft-agent/shared/skills')
+    const skill = createSkill(workspace.rootPath, skillSlug, input)
+    deps.platform.logger?.info(`Created skill: ${skillSlug} in workspace ${workspaceId}`)
+    return skill
+  })
+
+  // Save (update) a skill in a workspace
+  server.handle(RPC_CHANNELS.skills.SAVE, async (_ctx, workspaceId: string, skillSlug: string, input: { name: string; description: string; content: string; globs?: string[]; alwaysAllow?: string[]; icon?: string; requiredSources?: string[] }) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error('Workspace not found')
+
+    const { saveSkill } = await import('@craft-agent/shared/skills')
+    const skill = saveSkill(workspace.rootPath, skillSlug, input)
+    deps.platform.logger?.info(`Saved skill: ${skillSlug} in workspace ${workspaceId}`)
+    return skill
+  })
+
   // Delete a skill from a workspace
   server.handle(RPC_CHANNELS.skills.DELETE, async (_ctx, workspaceId: string, skillSlug: string) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -109,5 +137,38 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     const skillsDir = getWorkspaceSkillsPath(workspace.rootPath)
     const skillDir = join(skillsDir, skillSlug)
     await deps.platform.showItemInFolder?.(skillDir)
+  })
+
+  // ---- Global Skills (cross-workspace, ~/.agents/skills/) ----
+
+  // Get all global skills
+  server.handle(RPC_CHANNELS.skills.GET_GLOBAL, async () => {
+    const { loadGlobalSkills } = await import('@craft-agent/shared/skills')
+    const skills = loadGlobalSkills()
+    deps.platform.logger?.info(`SKILLS_GET_GLOBAL: Loaded ${skills.length} global skills`)
+    return skills
+  })
+
+  // Create a new global skill
+  server.handle(RPC_CHANNELS.skills.CREATE_GLOBAL, async (_ctx, skillSlug: string, input: { name: string; description: string; content: string; globs?: string[]; alwaysAllow?: string[]; icon?: string; requiredSources?: string[] }) => {
+    const { createGlobalSkill } = await import('@craft-agent/shared/skills')
+    const skill = createGlobalSkill(skillSlug, input)
+    deps.platform.logger?.info(`Created global skill: ${skillSlug}`)
+    return skill
+  })
+
+  // Save (update) a global skill
+  server.handle(RPC_CHANNELS.skills.SAVE_GLOBAL, async (_ctx, skillSlug: string, input: { name: string; description: string; content: string; globs?: string[]; alwaysAllow?: string[]; icon?: string; requiredSources?: string[] }) => {
+    const { saveGlobalSkill } = await import('@craft-agent/shared/skills')
+    const skill = saveGlobalSkill(skillSlug, input)
+    deps.platform.logger?.info(`Saved global skill: ${skillSlug}`)
+    return skill
+  })
+
+  // Delete a global skill
+  server.handle(RPC_CHANNELS.skills.DELETE_GLOBAL, async (_ctx, skillSlug: string) => {
+    const { deleteGlobalSkill } = await import('@craft-agent/shared/skills')
+    deleteGlobalSkill(skillSlug)
+    deps.platform.logger?.info(`Deleted global skill: ${skillSlug}`)
   })
 }

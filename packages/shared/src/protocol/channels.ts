@@ -228,10 +228,17 @@ export const RPC_CHANNELS = {
   skills: {
     GET: 'skills:get',
     GET_FILES: 'skills:getFiles',
+    CREATE: 'skills:create',
+    SAVE: 'skills:save',
     DELETE: 'skills:delete',
     OPEN_EDITOR: 'skills:openEditor',
     OPEN_FINDER: 'skills:openFinder',
     CHANGED: 'skills:changed',
+    // Global skills (cross-workspace, ~/.agents/skills/)
+    GET_GLOBAL: 'skills:getGlobal',
+    CREATE_GLOBAL: 'skills:createGlobal',
+    SAVE_GLOBAL: 'skills:saveGlobal',
+    DELETE_GLOBAL: 'skills:deleteGlobal',
   },
   statuses: {
     LIST: 'statuses:list',

@@ -12,9 +12,18 @@ export {
   loadAllSkills,
   loadSkillBySlug,
   getSkillIconPath,
+  createSkill,
+  saveSkill,
   deleteSkill,
   skillExists,
   listSkillSlugs,
+  loadGlobalSkills,
+  listGlobalSkillSlugs,
+  createGlobalSkill,
+  saveGlobalSkill,
+  deleteGlobalSkill,
+  globalSkillExists,
   skillNeedsIconDownload,
   downloadSkillIcon,
 } from './storage.ts';
+export type { SaveSkillInput } from './storage.ts';

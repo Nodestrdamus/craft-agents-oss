@@ -7,10 +7,12 @@
 
 import {
   existsSync,
+  mkdirSync,
   readFileSync,
   readdirSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
@@ -284,6 +286,156 @@ export function deleteSkill(workspaceRoot: string, slug: string): boolean {
   } catch {
     return false;
   }
+}
+
+// ============================================================
+// Create / Save Operations
+// ============================================================
+
+/** Input for creating or updating a skill */
+export interface SaveSkillInput {
+  name: string;
+  description: string;
+  content: string;
+  globs?: string[];
+  alwaysAllow?: string[];
+  icon?: string;
+  requiredSources?: string[];
+}
+
+/**
+ * Serialize skill metadata + content into a SKILL.md file string.
+ */
+function serializeSkillMd(input: SaveSkillInput): string {
+  const frontmatter: Record<string, unknown> = {
+    name: input.name,
+    description: input.description,
+  };
+  if (input.globs?.length) frontmatter.globs = input.globs;
+  if (input.alwaysAllow?.length) frontmatter.alwaysAllow = input.alwaysAllow;
+  if (input.icon) frontmatter.icon = input.icon;
+  if (input.requiredSources?.length) frontmatter.requiredSources = input.requiredSources;
+
+  return matter.stringify(input.content, frontmatter);
+}
+
+/**
+ * Validate a skill slug (directory name).
+ * Must be lowercase alphanumeric with hyphens, 1-64 chars.
+ */
+function validateSlug(slug: string): void {
+  if (!slug || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(slug)) {
+    throw new Error(`Invalid skill slug: "${slug}". Must be lowercase alphanumeric with hyphens, 1-64 chars.`);
+  }
+}
+
+/**
+ * Write a skill to a specific skills directory.
+ * Creates the directory and SKILL.md file.
+ */
+function writeSkillToDir(skillsDir: string, slug: string, input: SaveSkillInput): LoadedSkill {
+  validateSlug(slug);
+
+  const skillDir = join(skillsDir, slug);
+  mkdirSync(skillDir, { recursive: true });
+
+  const skillFile = join(skillDir, 'SKILL.md');
+  writeFileSync(skillFile, serializeSkillMd(input), 'utf-8');
+
+  // Re-load to get the canonical parsed form
+  const source: SkillSource = skillsDir === GLOBAL_AGENT_SKILLS_DIR ? 'global' : 'workspace';
+  const loaded = loadSkillFromDir(skillsDir, slug, source);
+  if (!loaded) {
+    throw new Error(`Failed to load skill after writing: ${slug}`);
+  }
+  return loaded;
+}
+
+/**
+ * Create a new skill in a workspace.
+ * @throws If a skill with that slug already exists.
+ */
+export function createSkill(workspaceRoot: string, slug: string, input: SaveSkillInput): LoadedSkill {
+  const skillsDir = getWorkspaceSkillsPath(workspaceRoot);
+  if (existsSync(join(skillsDir, slug, 'SKILL.md'))) {
+    throw new Error(`Skill already exists: ${slug}`);
+  }
+  return writeSkillToDir(skillsDir, slug, input);
+}
+
+/**
+ * Update an existing skill in a workspace (or create if it doesn't exist).
+ */
+export function saveSkill(workspaceRoot: string, slug: string, input: SaveSkillInput): LoadedSkill {
+  const skillsDir = getWorkspaceSkillsPath(workspaceRoot);
+  return writeSkillToDir(skillsDir, slug, input);
+}
+
+// ============================================================
+// Global Skills CRUD
+// ============================================================
+
+/**
+ * Load all global skills (~/.agents/skills/)
+ */
+export function loadGlobalSkills(): LoadedSkill[] {
+  return loadSkillsFromDir(GLOBAL_AGENT_SKILLS_DIR, 'global');
+}
+
+/**
+ * List global skill slugs
+ */
+export function listGlobalSkillSlugs(): string[] {
+  if (!existsSync(GLOBAL_AGENT_SKILLS_DIR)) return [];
+  try {
+    return readdirSync(GLOBAL_AGENT_SKILLS_DIR, { withFileTypes: true })
+      .filter((entry) => {
+        if (!entry.isDirectory()) return false;
+        return existsSync(join(GLOBAL_AGENT_SKILLS_DIR, entry.name, 'SKILL.md'));
+      })
+      .map((entry) => entry.name);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Create a new global skill.
+ * @throws If a skill with that slug already exists.
+ */
+export function createGlobalSkill(slug: string, input: SaveSkillInput): LoadedSkill {
+  if (existsSync(join(GLOBAL_AGENT_SKILLS_DIR, slug, 'SKILL.md'))) {
+    throw new Error(`Global skill already exists: ${slug}`);
+  }
+  return writeSkillToDir(GLOBAL_AGENT_SKILLS_DIR, slug, input);
+}
+
+/**
+ * Save (update or create) a global skill.
+ */
+export function saveGlobalSkill(slug: string, input: SaveSkillInput): LoadedSkill {
+  return writeSkillToDir(GLOBAL_AGENT_SKILLS_DIR, slug, input);
+}
+
+/**
+ * Delete a global skill.
+ */
+export function deleteGlobalSkill(slug: string): boolean {
+  const skillDir = join(GLOBAL_AGENT_SKILLS_DIR, slug);
+  if (!existsSync(skillDir)) return false;
+  try {
+    rmSync(skillDir, { recursive: true });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Check if a global skill exists.
+ */
+export function globalSkillExists(slug: string): boolean {
+  return existsSync(join(GLOBAL_AGENT_SKILLS_DIR, slug, 'SKILL.md'));
 }
 
 // ============================================================
