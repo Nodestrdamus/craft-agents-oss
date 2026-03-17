@@ -785,6 +785,8 @@ interface ManagedSession {
   hasUnread?: boolean
   // Per-session source selection (slugs of enabled sources)
   enabledSourceSlugs?: string[]
+  // Per-session skill selection (slugs of enabled skills)
+  enabledSkillSlugs?: string[]
   // Labels applied to this session (additive tags, many-per-session)
   labels?: string[]
   // Working directory for this session (used by agent for bash commands)
@@ -2066,6 +2068,8 @@ export class SessionManager implements ISessionManager {
     const defaultModel = wsConfig?.defaults?.model
     // Get default enabled sources from workspace config
     const defaultEnabledSourceSlugs = options?.enabledSourceSlugs ?? wsConfig?.defaults?.enabledSourceSlugs
+    // Get default enabled skills from workspace config
+    const defaultEnabledSkillSlugs = options?.enabledSkillSlugs ?? wsConfig?.defaults?.enabledSkillSlugs
 
     // Resolve backend target early for branching policy checks.
     const targetBackendContext = resolveBackendContext({
@@ -2348,6 +2352,7 @@ export class SessionManager implements ISessionManager {
       thinkingLevel: defaultThinkingLevel,
       systemPromptPreset: options?.systemPromptPreset,
       enabledSourceSlugs: defaultEnabledSourceSlugs,
+      enabledSkillSlugs: defaultEnabledSkillSlugs,
       branchFromMessageId: validatedBranch?.sourceMessageId,
       branchContextStrategy: validatedBranch?.branchContextStrategy,
       branchFromSdkSessionId: validatedBranch?.branchFromSdkSessionId,
@@ -3822,6 +3827,41 @@ export class SessionManager implements ISessionManager {
   getSessionSources(sessionId: string): string[] {
     const managed = this.sessions.get(sessionId)
     return managed?.enabledSourceSlugs ?? []
+  }
+
+  /**
+   * Set enabled skills for a session (per-session skill selection)
+   */
+  async setSessionSkills(sessionId: string, skillSlugs: string[]): Promise<void> {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) {
+      throw new Error(`Session not found: ${sessionId}`)
+    }
+
+    sessionLog.info(`Setting skills for session ${sessionId}:`, skillSlugs)
+
+    // Store the selection
+    managed.enabledSkillSlugs = skillSlugs
+
+    // Persist the session with updated skills
+    this.persistSession(managed)
+
+    // Notify renderer of the skill change
+    this.sendEvent({
+      type: 'skills_changed',
+      sessionId,
+      enabledSkillSlugs: skillSlugs,
+    }, managed.workspace.id)
+
+    sessionLog.info(`Session ${sessionId} skills updated: ${skillSlugs.length} skills`)
+  }
+
+  /**
+   * Get the enabled skill slugs for a session
+   */
+  getSessionSkills(sessionId: string): string[] {
+    const managed = this.sessions.get(sessionId)
+    return managed?.enabledSkillSlugs ?? []
   }
 
   /**

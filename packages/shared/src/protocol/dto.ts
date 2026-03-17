@@ -67,6 +67,7 @@ export interface Session {
    */
   hasUnread?: boolean
   enabledSourceSlugs?: string[]
+  enabledSkillSlugs?: string[]
   workingDirectory?: string
   sessionFolderPath?: string
   sharedUrl?: string
@@ -121,6 +122,7 @@ export interface CreateSessionOptions {
   labels?: string[]
   isFlagged?: boolean
   enabledSourceSlugs?: string[]
+  enabledSkillSlugs?: string[]
   /**
    * Message ID to branch from. This is a hard context cutoff:
    * the new session must not include model context from later parent messages.
@@ -164,6 +166,7 @@ export type SessionEvent =
   | { type: 'permission_mode_changed'; sessionId: string; permissionMode: PermissionMode; previousPermissionMode?: PermissionMode; transitionDisplay?: string; modeVersion?: number; changedAt?: string; changedBy?: PermissionModeState['changedBy'] }
   | { type: 'plan_submitted'; sessionId: string; message: Message }
   | { type: 'sources_changed'; sessionId: string; enabledSourceSlugs: string[] }
+  | { type: 'skills_changed'; sessionId: string; enabledSkillSlugs: string[] }
   | { type: 'labels_changed'; sessionId: string; labels: string[] }
   | { type: 'connection_changed'; sessionId: string; connectionSlug: string; supportsBranching?: boolean }
   | { type: 'task_backgrounded'; sessionId: string; toolUseId: string; taskId: string; intent?: string; turnId?: string }
@@ -213,6 +216,7 @@ export type SessionCommand =
   | { type: 'setThinkingLevel'; level: ThinkingLevel }
   | { type: 'updateWorkingDirectory'; dir: string }
   | { type: 'setSources'; sourceSlugs: string[] }
+  | { type: 'setSkills'; skillSlugs: string[] }
   | { type: 'setLabels'; labels: string[] }
   | { type: 'showInFinder' }
   | { type: 'copyPath' }
@@ -454,6 +458,7 @@ export interface WorkspaceSettings {
   localMcpEnabled?: boolean
   defaultLlmConnection?: string
   enabledSourceSlugs?: string[]
+  enabledSkillSlugs?: string[]
 }
 
 // ---------------------------------------------------------------------------

@@ -33,7 +33,7 @@ export const SESSION_PERSISTENT_FIELDS = [
   // Read tracking
   'lastReadMessageId', 'hasUnread',
   // Config
-  'enabledSourceSlugs', 'permissionMode', 'previousPermissionMode', 'workingDirectory',
+  'enabledSourceSlugs', 'enabledSkillSlugs', 'permissionMode', 'previousPermissionMode', 'workingDirectory',
   // Model/Connection
   'model', 'llmConnection', 'connectionLocked', 'thinkingLevel',
   // Sharing
@@ -126,6 +126,8 @@ export interface SessionConfig {
   hasUnread?: boolean;
   /** Per-session source selection (source slugs) */
   enabledSourceSlugs?: string[];
+  /** Per-session skill selection (skill slugs). When set, only these skills are available. */
+  enabledSkillSlugs?: string[];
   /** Working directory for this session (used by agent for bash commands and context) */
   workingDirectory?: string;
   /** SDK cwd for session storage - set once at creation, never changes. Ensures SDK can find session transcripts regardless of workingDirectory changes. */
@@ -236,6 +238,8 @@ export interface SessionHeader {
   hasUnread?: boolean;
   /** Per-session source selection (source slugs) */
   enabledSourceSlugs?: string[];
+  /** Per-session skill selection (skill slugs). When set, only these skills are available. */
+  enabledSkillSlugs?: string[];
   /** Working directory for this session (used by agent for bash commands and context) */
   workingDirectory?: string;
   /** SDK cwd for session storage - set once at creation, never changes */
