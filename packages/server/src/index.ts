@@ -125,6 +125,7 @@ const instance = await (async () => {
         }
       },
       cleanupClientResources: cleanupSessionFileWatchForClient,
+      getSessionPath: (sm, sessionId) => sm.getSessionPath(sessionId),
     })
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error))

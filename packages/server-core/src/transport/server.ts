@@ -120,6 +120,11 @@ export class WsRpcServer implements RpcServer {
     return this._protocol
   }
 
+  /** The underlying HTTPS server (available only in TLS mode). Used to attach HTTP handlers. */
+  get httpServer(): HttpsServer | null {
+    return this.httpsServer
+  }
+
   // -------------------------------------------------------------------------
   // RpcServer interface
   // -------------------------------------------------------------------------

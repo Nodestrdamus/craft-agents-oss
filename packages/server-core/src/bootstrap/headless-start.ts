@@ -1,10 +1,12 @@
 import { OAuthFlowStore } from '@craft-agent/shared/auth'
+import { createDualTokenValidator } from '@craft-agent/shared/auth/entra-jwt'
 import { ensureConfigDir, loadStoredConfig, saveConfig } from '@craft-agent/shared/config'
 import { setBundledAssetsRoot } from '@craft-agent/shared/utils'
 import { WsRpcServer, type WsRpcTlsOptions } from '../transport/server'
 import type { EventSink, RpcServer } from '../transport/types'
 import { createHeadlessPlatform } from '../runtime/platform-headless'
 import type { PlatformServices } from '../runtime/platform'
+import { createHttpDownloadHandler } from '../handlers/http/downloads'
 
 interface ModelRefreshServiceLike {
   startAll(): void
@@ -30,6 +32,8 @@ export interface HeadlessServerBootstrapOptions<TSessionManager, THandlerDeps> {
   initModelRefreshService: () => ModelRefreshServiceLike
   cleanupSessionManager?: (sessionManager: TSessionManager) => Promise<void> | void
   cleanupClientResources?: (clientId: string) => void
+  /** Called after server is ready, receives sessionManager for HTTP route binding */
+  getSessionPath?: (sessionManager: TSessionManager, sessionId: string) => string | null
   serverId?: string
   /** TLS configuration. When provided, the server listens on wss:// instead of ws://. */
   tls?: WsRpcTlsOptions
@@ -101,7 +105,7 @@ export async function startHeadlessServer<TSessionManager, THandlerDeps>(
     host: rpcHost,
     port: rpcPort,
     requireAuth: true,
-    validateToken: async (t) => t === serverToken,
+    validateToken: createDualTokenValidator(serverToken),
     serverId: options.serverId ?? 'headless',
     tls: options.tls,
     onClientDisconnected: (clientId) => {
@@ -110,6 +114,18 @@ export async function startHeadlessServer<TSessionManager, THandlerDeps>(
   })
 
   await wsServer.listen()
+
+  // Attach HTTP download endpoints if underlying HTTP server is available
+  if (wsServer.httpServer) {
+    const httpHandler = createHttpDownloadHandler({
+      serverToken,
+      getSessionPath: options.getSessionPath
+        ? (sessionId: string) => options.getSessionPath!(sessionManager, sessionId)
+        : () => null,
+    })
+    wsServer.httpServer.on('request', httpHandler)
+    platform.logger.info('[headless] HTTP download endpoints attached')
+  }
 
   const oauthFlowStore = new OAuthFlowStore()
 
