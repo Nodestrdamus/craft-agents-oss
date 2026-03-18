@@ -1,0 +1,104 @@
+name: Upstream Sync Check
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # Daily at 8am UTC
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/lukilabs/craft-agents-oss.git || true
+          git fetch upstream --tags
+
+      - name: Check for new releases
+        id: check
+        run: |
+          # Get latest upstream tag
+          LATEST=$(git tag --sort=-creatordate --list 'v*' | head -1)
+          echo "latest_upstream=$LATEST" >> $GITHUB_OUTPUT
+
+          # Get our last synced tag
+          LAST_SYNC=$(git tag --sort=-creatordate --list 'upstream-*' | head -1 | sed 's/upstream-//')
+          if [ -z "$LAST_SYNC" ]; then
+            # No sync tags yet — check FORK_MERGE_GUIDE for last synced version
+            LAST_SYNC=$(grep -oP 'Last synced upstream version.*\*\*\`?\K[v0-9.]+' FORK_MERGE_GUIDE.md 2>/dev/null || echo "unknown")
+          fi
+          echo "last_sync=$LAST_SYNC" >> $GITHUB_OUTPUT
+
+          if [ "$LATEST" != "$LAST_SYNC" ]; then
+            echo "needs_sync=true" >> $GITHUB_OUTPUT
+            echo "New upstream release: $LATEST (we're on $LAST_SYNC)"
+          else
+            echo "needs_sync=false" >> $GITHUB_OUTPUT
+            echo "Up to date with $LATEST"
+          fi
+
+      - name: Get changelog
+        if: steps.check.outputs.needs_sync == 'true'
+        id: changelog
+        run: |
+          LATEST="${{ steps.check.outputs.latest_upstream }}"
+          # Get the commit message for the release (contains changelog)
+          CHANGELOG=$(git log --format=%B -n 1 "$LATEST" | head -50)
+          # Escape for GitHub Actions
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "changelog<<$EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+      - name: Check for existing issue
+        if: steps.check.outputs.needs_sync == 'true'
+        id: existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST="${{ steps.check.outputs.latest_upstream }}"
+          EXISTING=$(gh issue list --search "Upstream $LATEST available" --state open --json number --jq '.[0].number // ""')
+          echo "issue_number=$EXISTING" >> $GITHUB_OUTPUT
+
+      - name: Create sync issue
+        if: steps.check.outputs.needs_sync == 'true' && steps.existing.outputs.issue_number == ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST="${{ steps.check.outputs.latest_upstream }}"
+          LAST="${{ steps.check.outputs.last_sync }}"
+          gh issue create \
+            --title "Upstream $LATEST available (we're on $LAST)" \
+            --label "upstream-sync" \
+            --body "$(cat <<'ISSUE_EOF'
+          ## Upstream Release Detected
+
+          A new release of `lukilabs/craft-agents-oss` is available.
+
+          | Key | Value |
+          |-----|-------|
+          | **New version** | `${{ steps.check.outputs.latest_upstream }}` |
+          | **Our version** | `${{ steps.check.outputs.last_sync }}` |
+
+          ### Changelog
+          ${{ steps.changelog.outputs.changelog }}
+
+          ### Merge Steps
+          Follow the [FORK_MERGE_GUIDE.md](../blob/dev/FORK_MERGE_GUIDE.md) to merge this release.
+
+          ### Checklist
+          - [ ] Fetch upstream tags
+          - [ ] Check conflict zones
+          - [ ] Merge `origin/main` into `dev`
+          - [ ] Resolve conflicts per registry
+          - [ ] Run `bun install && bun run typecheck:shared && bun run build`
+          - [ ] Tag `upstream-${{ steps.check.outputs.latest_upstream }}`
+          - [ ] Push to fork
+          - [ ] Update FORK_MERGE_GUIDE.md
+          ISSUE_EOF
+          )"

@@ -19,7 +19,7 @@ import type { StoredAttachment, StoredMessage } from '@craft-agent/core/types';
 import type { Plan } from '../agent/plan-types.ts';
 import type { PermissionMode } from '../agent/mode-manager.ts';
 import type { ThinkingLevel } from '../agent/thinking-levels.ts';
-import { isValidThinkingLevel } from '../agent/thinking-levels.ts';
+import { isValidThinkingLevel, normalizeThinkingLevel } from '../agent/thinking-levels.ts';
 import { parsePermissionMode, PERMISSION_MODE_ORDER } from '../agent/mode-types.ts';
 import { type ConfigDefaults } from './config-defaults-schema.ts';
 import { isValidThemeFile } from './validators.ts';
@@ -73,6 +73,8 @@ export interface StoredConfig {
   networkProxy?: import('./types.ts').NetworkProxySettings;
   // Windows: path to Git Bash (bash.exe) for the SDK subprocess
   gitBashPath?: string;
+  // User chose "Setup later" during onboarding — skip showing onboarding on next launch
+  setupDeferred?: boolean;
 }
 
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
@@ -2153,6 +2155,8 @@ export function updateLlmConnection(slug: string, updates: Partial<Omit<LlmConne
     gcpRegion: updates.gcpRegion !== undefined ? updates.gcpRegion : existing.gcpRegion,
     // Pi auth provider
     piAuthProvider: updates.piAuthProvider !== undefined ? updates.piAuthProvider : existing.piAuthProvider,
+    // Custom endpoint protocol (Anthropic/OpenAI compatible)
+    customEndpoint: updates.customEndpoint !== undefined ? updates.customEndpoint : existing.customEndpoint,
     // Timestamps
     lastUsedAt: updates.lastUsedAt !== undefined ? updates.lastUsedAt : existing.lastUsedAt,
   };
@@ -2297,11 +2301,12 @@ export function setDefaultLlmConnection(slug: string): boolean {
  */
 export function getDefaultThinkingLevel(): ThinkingLevel {
   const config = loadStoredConfig();
-  if (config?.defaultThinkingLevel && isValidThinkingLevel(config.defaultThinkingLevel)) {
-    return config.defaultThinkingLevel;
+  if (config?.defaultThinkingLevel) {
+    const normalized = normalizeThinkingLevel(config.defaultThinkingLevel);
+    if (normalized) return normalized;
   }
   const defaults = loadConfigDefaults();
-  return defaults.workspaceDefaults.thinkingLevel;
+  return normalizeThinkingLevel(defaults.workspaceDefaults.thinkingLevel) ?? 'medium';
 }
 
 /**
@@ -2383,6 +2388,25 @@ export function setNetworkProxySettings(settings: NetworkProxySettings): void {
     config.networkProxy = normalized;
   }
 
+  saveConfig(config);
+}
+
+// ============================================
+// Setup Deferred (user skipped onboarding)
+// ============================================
+
+export function isSetupDeferred(): boolean {
+  return loadStoredConfig()?.setupDeferred === true;
+}
+
+export function setSetupDeferred(deferred: boolean): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  if (deferred) {
+    config.setupDeferred = true;
+  } else {
+    delete config.setupDeferred;
+  }
   saveConfig(config);
 }
 

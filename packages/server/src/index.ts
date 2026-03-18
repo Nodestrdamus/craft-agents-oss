@@ -41,6 +41,7 @@ process.on("unhandledRejection", (reason) => {
 
 import { join } from 'node:path'
 import { readFileSync } from 'node:fs'
+import { enableDebug } from '@craft-agent/shared/utils/debug'
 import { startHeadlessServer } from '@craft-agent/server-core/bootstrap'
 import type { WsRpcTlsOptions } from '@craft-agent/server-core/transport'
 import { registerCoreRpcHandlers, cleanupSessionFileWatchForClient } from '@craft-agent/server-core/handlers/rpc'
@@ -50,6 +51,10 @@ import { setSearchPlatform, setImageProcessor } from '@craft-agent/server-core/s
 import type { HandlerDeps } from '@craft-agent/server-core/handlers'
 
 process.env.CRAFT_IS_PACKAGED ??= 'false'
+
+if (process.env.CRAFT_DEBUG === 'true' || process.env.CRAFT_DEBUG === '1') {
+  enableDebug()
+}
 
 // In dev (monorepo), bundled assets root is the repo root (4 levels up from this file).
 // In packaged mode, use CRAFT_BUNDLED_ASSETS_ROOT env or cwd.
