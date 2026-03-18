@@ -99,6 +99,8 @@ export interface Session {
   }
   /** When true, session is hidden from session list (e.g., mini edit sessions) */
   hidden?: boolean
+  /** Whether this is a batch-processing session */
+  isBatch?: boolean
   isArchived?: boolean
   archivedAt?: number
   supportsBranching?: boolean
@@ -123,6 +125,8 @@ export interface CreateSessionOptions {
   isFlagged?: boolean
   enabledSourceSlugs?: string[]
   enabledSkillSlugs?: string[]
+  /** Whether this is a batch-processing session */
+  isBatch?: boolean
   /**
    * Message ID to branch from. This is a hard context cutoff:
    * the new session must not include model context from later parent messages.
@@ -175,6 +179,8 @@ export type SessionEvent =
   | { type: 'task_completed'; sessionId: string; taskId: string; status: 'completed' | 'failed' | 'stopped'; outputFile?: string; summary?: string; turnId?: string }
   | { type: 'shell_killed'; sessionId: string; shellId: string }
   | { type: 'user_message'; sessionId: string; message: Message; status: 'accepted' | 'queued' | 'processing'; optimisticMessageId?: string }
+  | { type: 'batch_progress'; batchId: string; name: string; status: string; total: number; pending: number; running: number; completed: number; failed: number }
+  | { type: 'batch_complete'; batchId: string; status: string }
   | { type: 'session_flagged'; sessionId: string }
   | { type: 'session_unflagged'; sessionId: string }
   | { type: 'session_archived'; sessionId: string }

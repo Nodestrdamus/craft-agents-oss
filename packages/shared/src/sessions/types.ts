@@ -42,6 +42,8 @@ export const SESSION_PERSISTENT_FIELDS = [
   'pendingPlanExecution',
   // Archive
   'isArchived', 'archivedAt',
+  // Batch
+  'isBatch',
   // Branching
   'branchFromMessageId',
   'branchFromSdkSessionId',
@@ -188,6 +190,8 @@ export interface SessionConfig {
    * - Pi: session entry ID (used with SessionManager.branch(anchor))
    */
   branchFromSdkTurnId?: string;
+  /** Whether this is a batch-processing session (hidden from main list, shown in Batch Sessions view) */
+  isBatch?: boolean;
   /** Metadata for sessions created by automations */
   triggeredBy?: { automationName?: string; event?: string; timestamp?: number };
 }
@@ -275,6 +279,8 @@ export interface SessionHeader {
   isArchived?: boolean;
   /** Timestamp when session was archived (for retention policy) */
   archivedAt?: number;
+  /** Whether this is a batch-processing session */
+  isBatch?: boolean;
   /** Metadata for sessions created by automations */
   triggeredBy?: { automationName?: string; event?: string; timestamp?: number };
   // Pre-computed fields for fast list loading
@@ -349,6 +355,8 @@ export interface SessionMetadata {
   tokenUsage?: SessionTokenUsage;
   /** When true, session is hidden from session list (e.g., mini edit sessions) */
   hidden?: boolean;
+  /** Whether this is a batch-processing session */
+  isBatch?: boolean;
   /** Whether this session is archived */
   isArchived?: boolean;
   /** Timestamp when session was archived (for retention policy) */

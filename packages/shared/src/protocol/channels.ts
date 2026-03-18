@@ -335,6 +335,19 @@ export const RPC_CHANNELS = {
     REPLAY: 'automations:replay',
     CHANGED: 'automations:changed',
   },
+  batches: {
+    LIST: 'batches:list',
+    START: 'batches:start',
+    PAUSE: 'batches:pause',
+    RESUME: 'batches:resume',
+    GET_STATUS: 'batches:getStatus',
+    GET_STATE: 'batches:getState',
+    SET_ENABLED: 'batches:setEnabled',
+    DUPLICATE: 'batches:duplicate',
+    DELETE: 'batches:delete',
+    TEST: 'batches:test',
+    CHANGED: 'batches:changed',
+  },
 } as const
 
 // IPC_CHANNELS compat alias removed — all consumers now use RPC_CHANNELS

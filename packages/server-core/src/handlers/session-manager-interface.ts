@@ -161,5 +161,13 @@ export interface ISessionManager {
     llmConnection?: string,
     model?: string,
     automationName?: string,
+    isBatch?: boolean,
+    workingDirectory?: string,
   ): Promise<{ sessionId: string }>
+
+  // ---------------------------------------------------------------------------
+  // Batch processing
+  // ---------------------------------------------------------------------------
+
+  getBatchProcessor?(workspaceRootPath: string): import('@craft-agent/shared/batches').BatchProcessor | undefined
 }
