@@ -7,6 +7,7 @@ import { PERMISSION_MODE_CONFIG } from '../agent/mode-types.ts';
 import { FEATURE_FLAGS } from '../feature-flags.ts';
 import { APP_VERSION } from '../version/index.ts';
 import { readPluginName } from '../utils/workspace.ts';
+import { getWorkspaceMemoryContext } from '../workspaces/memory.ts';
 import { globSync } from 'glob';
 import os from 'os';
 
@@ -330,11 +331,14 @@ export function getSystemPrompt(
   // Get project context files for monorepo support (lives in system prompt for persistence across compaction)
   const projectContextFiles = getProjectContextFilesPrompt(workingDirectory);
 
+  // Get workspace-level shared memory context (if any memories exist)
+  const workspaceMemory = workspaceRootPath ? getWorkspaceMemoryContext(workspaceRootPath) : '';
+
   // Note: Date/time context is now added to user messages instead of system prompt
   // to enable prompt caching. The system prompt stays static and cacheable.
   // Safe Mode context is also in user messages for the same reason.
   const basePrompt = getCraftAssistantPrompt(workspaceRootPath, backendName);
-  const fullPrompt = `${basePrompt}${preferences}${debugContext}${projectContextFiles}`;
+  const fullPrompt = `${basePrompt}${preferences}${debugContext}${projectContextFiles}${workspaceMemory}`;
 
   debug('[getSystemPrompt] full prompt length:', fullPrompt.length);
 

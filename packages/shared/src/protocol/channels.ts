@@ -368,6 +368,14 @@ export const RPC_CHANNELS = {
     // Audit
     GET_AUDIT_LOG: 'enterprise:getAuditLog',
   },
+  workspaceMemory: {
+    LIST: 'workspaceMemory:list',
+    GET: 'workspaceMemory:get',
+    SAVE: 'workspaceMemory:save',
+    DELETE: 'workspaceMemory:delete',
+    GET_INDEX: 'workspaceMemory:getIndex',
+    SET_INDEX: 'workspaceMemory:setIndex',
+  },
   marketplace: {
     LIST: 'marketplace:list',
     GET: 'marketplace:get',

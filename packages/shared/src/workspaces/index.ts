@@ -40,3 +40,19 @@ export {
   CONFIG_DIR,
   DEFAULT_WORKSPACES_DIR,
 } from './storage.ts';
+
+// Workspace memory
+export {
+  listWorkspaceMemory,
+  getWorkspaceMemory,
+  saveWorkspaceMemory,
+  deleteWorkspaceMemory,
+  readMemoryIndex,
+  writeMemoryIndex,
+  getWorkspaceMemoryContext,
+} from './memory.ts';
+export type {
+  WorkspaceMemoryType,
+  WorkspaceMemoryEntry,
+  WorkspaceMemoryIndex,
+} from './memory.ts';

@@ -19,6 +19,7 @@ import { registerBatchHandlers } from './batches'
 import { registerEnterpriseHandlers } from './enterprise'
 import { registerMarketplaceHandlers } from './marketplace'
 import { registerWorkspaceCoreHandlers } from './workspace'
+import { registerWorkspaceMemoryHandlers } from './workspace-memory'
 
 export function registerCoreRpcHandlers(server: RpcServer, deps: HandlerDeps): void {
   registerAuthHandlers(server, deps)
@@ -38,4 +39,5 @@ export function registerCoreRpcHandlers(server: RpcServer, deps: HandlerDeps): v
   registerEnterpriseHandlers(server, deps)
   registerMarketplaceHandlers(server, deps)
   registerWorkspaceCoreHandlers(server, deps)
+  registerWorkspaceMemoryHandlers(server, deps)
 }

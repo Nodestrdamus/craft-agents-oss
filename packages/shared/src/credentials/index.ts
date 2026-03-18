@@ -26,3 +26,4 @@ export { CredentialManager, getCredentialManager } from './manager.ts';
 export type { CredentialId, CredentialType, StoredCredential } from './types.ts';
 export { credentialIdToAccount, accountToCredentialId } from './types.ts';
 export type { CredentialBackend } from './backends/types.ts';
+export { KeyVaultBackend, isKeyVaultConfigured } from './backends/keyvault.ts';
