@@ -9,7 +9,7 @@ This document tracks how to keep our enterprise fork (`Nodestrdamus/craft-agents
 | **Fork remote** | `fork` → `https://github.com/Nodestrdamus/craft-agents-oss.git` |
 | **Upstream remote** | `origin` → `https://github.com/lukilabs/craft-agents-oss.git` |
 | **Fork branch** | `dev` |
-| **Last synced upstream version** | `v0.7.5` (commit `139c62d`) |
+| **Last synced upstream version** | `v0.7.7` (commit `ea760e8`, synced 2026-03-18) |
 | **Current upstream version** | Check with `git fetch origin --tags && git tag --sort=-creatordate | head -1` |
 
 ## Setup (One-Time)
@@ -139,7 +139,7 @@ Features we've added that do NOT exist upstream. Track these to ensure they surv
 | Per-session skill selection | `shared/src/sessions/types.ts`, `dto.ts`, `SessionManager.ts`, `sessions.ts` | dev (2026-03-16) |
 | Global Skills CRUD | `shared/src/skills/*`, `server-core/src/handlers/rpc/skills.ts` | dev (2026-03-16) |
 | Web client scaffold | `apps/web/*` | dev (2026-03-16) |
-| Batch Processing | `shared/src/batch/*`, `server-core/src/batch/*` | dev (TBD) |
+| Batch Processing | `shared/src/batches/*`, `server-core/src/handlers/rpc/batches.ts` | dev (2026-03-18) |
 | RBAC / Teams | TBD | TBD |
 
 ---
@@ -149,7 +149,7 @@ Features we've added that do NOT exist upstream. Track these to ensure they surv
 | Date | Upstream Version | Conflicts | Notes |
 |------|-----------------|-----------|-------|
 | 2026-03-16 | v0.7.5 | None | Initial fork point |
-| TBD | v0.7.7 | Pending | First merge — 8 overlapping files |
+| 2026-03-18 | v0.7.7 | 1 (SessionManager.ts) | forceAbort→interruptForHandoff API rename. 7 files auto-merged. |
 
 ---
 
