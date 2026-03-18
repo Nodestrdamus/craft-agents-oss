@@ -1,0 +1,58 @@
+# Craft Agents Enterprise — Docker Compose
+#
+# Services:
+#   craft-web     — Static SPA (nginx, port 80/443)
+#   craft-server  — Headless server (Bun, port 9100)
+#
+# Usage:
+#   docker compose up -d
+#   docker compose build --build-arg VITE_ENTRA_TENANT_ID=... craft-web
+#
+# Environment variables:
+#   See .env.example for full list
+
+services:
+  craft-web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        VITE_ENTRA_TENANT_ID: ${VITE_ENTRA_TENANT_ID:-}
+        VITE_ENTRA_CLIENT_ID: ${VITE_ENTRA_CLIENT_ID:-}
+        VITE_SERVER_URL: ${VITE_SERVER_URL:-ws://localhost:9100}
+        VITE_APP_VERSION: ${VITE_APP_VERSION:-0.7.7}
+    ports:
+      - "${WEB_PORT:-3000}:80"
+    depends_on:
+      craft-server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  craft-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    environment:
+      - SERVER_TOKEN=${SERVER_TOKEN:-}
+      - CREDENTIAL_STORE=${CREDENTIAL_STORE:-secure-storage}
+      - AZURE_KEYVAULT_URL=${AZURE_KEYVAULT_URL:-}
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID:-}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET:-}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID:-}
+      - ENTRA_TENANT_ID=${ENTRA_TENANT_ID:-}
+      - ENTRA_CLIENT_ID=${ENTRA_CLIENT_ID:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    ports:
+      - "${SERVER_PORT:-9100}:9100"
+    volumes:
+      - craft-data:/home/bun/.craft-agent
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9100/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  craft-data:

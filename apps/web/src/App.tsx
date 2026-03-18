@@ -3,6 +3,7 @@ import { useAtom, useSetAtom } from 'jotai'
 import { WebRpcClient } from './lib/rpc-client'
 import { CraftApi } from './lib/api-bridge'
 import { getToken, isAuthenticated, getAuthConfig } from './lib/auth'
+import { handleMsalRedirect } from './lib/msal'
 import {
   rpcClientAtom,
   apiAtom,
@@ -10,36 +11,47 @@ import {
   isAuthenticatedAtom,
   activeWorkspaceIdAtom,
 } from './lib/atoms'
-import { ConnectionStatus } from './components/ConnectionStatus'
+import { AppShell } from './components/AppShell'
 import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 
 export function App() {
   const [rpcClient, setRpcClient] = useAtom(rpcClientAtom)
-  const [connectionState, setConnectionState] = useAtom(connectionStateAtom)
+  const [, setConnectionState] = useAtom(connectionStateAtom)
   const [authenticated, setAuthenticated] = useAtom(isAuthenticatedAtom)
   const setApi = useSetAtom(apiAtom)
   const setActiveWorkspaceId = useSetAtom(activeWorkspaceIdAtom)
 
-  // Check auth state on mount
+  // Handle MSAL redirect callback + check auth state on mount
   useEffect(() => {
-    setAuthenticated(isAuthenticated())
-  }, [setAuthenticated])
-
-  // Handle auth callback (token in URL fragment)
-  useEffect(() => {
-    const hash = window.location.hash
-    if (hash.includes('access_token=')) {
-      const params = new URLSearchParams(hash.substring(1))
-      const token = params.get('access_token')
-      const expiresIn = parseInt(params.get('expires_in') ?? '3600', 10)
-      if (token) {
-        const { storeToken } = require('./lib/auth')
-        storeToken(token, expiresIn)
+    async function init() {
+      // Try MSAL redirect first (handles Entra ID callback)
+      const msalSuccess = await handleMsalRedirect()
+      if (msalSuccess) {
         setAuthenticated(true)
-        window.history.replaceState(null, '', window.location.pathname)
+        return
       }
+
+      // Handle legacy hash-based auth callback
+      const hash = window.location.hash
+      if (hash.includes('access_token=')) {
+        const params = new URLSearchParams(hash.substring(1))
+        const token = params.get('access_token')
+        const expiresIn = parseInt(params.get('expires_in') ?? '3600', 10)
+        if (token) {
+          const { storeToken } = await import('./lib/auth')
+          storeToken(token, expiresIn)
+          setAuthenticated(true)
+          window.history.replaceState(null, '', window.location.pathname)
+          return
+        }
+      }
+
+      // Check existing auth state
+      setAuthenticated(isAuthenticated())
     }
+
+    init()
   }, [setAuthenticated])
 
   // Connect to server when authenticated
@@ -51,14 +63,12 @@ export function App() {
     try {
       const token = await getToken()
       const config = getAuthConfig()
-      const serverUrl = config.serverUrl
 
       const client = new WebRpcClient({
-        url: serverUrl,
+        url: config.serverUrl,
         token,
       })
 
-      // Listen for connection state changes
       client.onStateChange((state) => {
         setConnectionState(state)
       })
@@ -69,7 +79,7 @@ export function App() {
       setRpcClient(client)
       setApi(api)
 
-      // Load workspaces
+      // Load workspaces and select the first one
       const workspaces = await api.getWorkspaces() as any[]
       if (workspaces.length > 0) {
         setActiveWorkspaceId(workspaces[0].id ?? workspaces[0].slug)
@@ -90,14 +100,13 @@ export function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authenticated])
 
+  if (!authenticated) {
+    return <LoginPage />
+  }
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <ConnectionStatus state={connectionState} />
-      {!authenticated ? (
-        <LoginPage />
-      ) : (
-        <DashboardPage />
-      )}
-    </div>
+    <AppShell>
+      <DashboardPage />
+    </AppShell>
   )
 }
