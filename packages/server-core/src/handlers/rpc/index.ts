@@ -16,6 +16,8 @@ import { registerSourcesHandlers } from './sources'
 import { registerStatusesHandlers } from './statuses'
 import { registerSystemCoreHandlers } from './system'
 import { registerBatchHandlers } from './batches'
+import { registerEnterpriseHandlers } from './enterprise'
+import { registerMarketplaceHandlers } from './marketplace'
 import { registerWorkspaceCoreHandlers } from './workspace'
 
 export function registerCoreRpcHandlers(server: RpcServer, deps: HandlerDeps): void {
@@ -33,5 +35,7 @@ export function registerCoreRpcHandlers(server: RpcServer, deps: HandlerDeps): v
   registerStatusesHandlers(server, deps)
   registerSystemCoreHandlers(server, deps)
   registerBatchHandlers(server, deps)
+  registerEnterpriseHandlers(server, deps)
+  registerMarketplaceHandlers(server, deps)
   registerWorkspaceCoreHandlers(server, deps)
 }

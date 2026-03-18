@@ -348,6 +348,34 @@ export const RPC_CHANNELS = {
     TEST: 'batches:test',
     CHANGED: 'batches:changed',
   },
+  enterprise: {
+    // Users
+    GET_USERS: 'enterprise:getUsers',
+    GET_USER: 'enterprise:getUser',
+    SET_USER_ROLE: 'enterprise:setUserRole',
+    DEACTIVATE_USER: 'enterprise:deactivateUser',
+    // Teams
+    GET_TEAMS: 'enterprise:getTeams',
+    GET_TEAM: 'enterprise:getTeam',
+    CREATE_TEAM: 'enterprise:createTeam',
+    UPDATE_TEAM: 'enterprise:updateTeam',
+    DELETE_TEAM: 'enterprise:deleteTeam',
+    ADD_TEAM_MEMBER: 'enterprise:addTeamMember',
+    REMOVE_TEAM_MEMBER: 'enterprise:removeTeamMember',
+    // Config
+    GET_CONFIG: 'enterprise:getConfig',
+    UPDATE_CONFIG: 'enterprise:updateConfig',
+    // Audit
+    GET_AUDIT_LOG: 'enterprise:getAuditLog',
+  },
+  marketplace: {
+    LIST: 'marketplace:list',
+    GET: 'marketplace:get',
+    PUBLISH: 'marketplace:publish',
+    UNPUBLISH: 'marketplace:unpublish',
+    SET_STATUS: 'marketplace:setStatus',
+    GET_CATEGORIES: 'marketplace:getCategories',
+  },
 } as const
 
 // IPC_CHANNELS compat alias removed — all consumers now use RPC_CHANNELS

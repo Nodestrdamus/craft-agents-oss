@@ -59,7 +59,9 @@
     "./skills/types": "./src/skills/types.ts",
     "./automations": "./src/automations/index.ts",
     "./automations/resolve-config-path": "./src/automations/resolve-config-path.ts",
-    "./protocol": "./src/protocol/index.ts"
+    "./protocol": "./src/protocol/index.ts",
+    "./enterprise": "./src/enterprise/index.ts",
+    "./auth/entra-jwt": "./src/auth/entra-jwt.ts"
   },
   "dependencies": {
     "@craft-agent/core": "workspace:*",
