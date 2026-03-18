@@ -61,7 +61,9 @@
     "./automations/resolve-config-path": "./src/automations/resolve-config-path.ts",
     "./protocol": "./src/protocol/index.ts",
     "./enterprise": "./src/enterprise/index.ts",
-    "./auth/entra-jwt": "./src/auth/entra-jwt.ts"
+    "./auth/entra-jwt": "./src/auth/entra-jwt.ts",
+    "./notes": "./src/notes/index.ts",
+    "./i18n": "./src/i18n/index.ts"
   },
   "dependencies": {
     "@craft-agent/core": "workspace:*",

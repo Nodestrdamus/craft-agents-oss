@@ -20,6 +20,8 @@ import { registerEnterpriseHandlers } from './enterprise'
 import { registerMarketplaceHandlers } from './marketplace'
 import { registerWorkspaceCoreHandlers } from './workspace'
 import { registerWorkspaceMemoryHandlers } from './workspace-memory'
+import { registerNotesHandlers } from './notes'
+import { registerI18nHandlers } from './i18n'
 
 export function registerCoreRpcHandlers(server: RpcServer, deps: HandlerDeps): void {
   registerAuthHandlers(server, deps)
@@ -40,4 +42,6 @@ export function registerCoreRpcHandlers(server: RpcServer, deps: HandlerDeps): v
   registerMarketplaceHandlers(server, deps)
   registerWorkspaceCoreHandlers(server, deps)
   registerWorkspaceMemoryHandlers(server, deps)
+  registerNotesHandlers(server, deps)
+  registerI18nHandlers(server, deps)
 }
